@@ -1,1 +1,1 @@
-# jurnalul-lui-razvan--codreanu
+# jurnalul-lui-razvan-codreanu
