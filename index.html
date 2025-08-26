@@ -3,70 +3,132 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jurnalul lui Razvan Codreanu</title>
-    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body>
-    <h1>Calendar Multimedia</h1>
-    <div id="calendar"></div>
+<body class="bg-gray-100 font-sans p-6">
+    <h1 class="text-3xl font-bold text-center mb-8">Jurnal Multimedia</h1>
 
-    <div id="day-details" class="hidden">
-        <h2>Ziua selectată: <span id="selected-date"></span></h2>
-        <textarea placeholder="Note pentru ziua asta..."></textarea>
-        <input type="file" accept="image/*,video/*,audio/*" multiple>
-        <button onclick="saveEntry()">Salvează</button>
+    <div id="calendar" class="grid grid-cols-7 gap-4 max-w-4xl mx-auto"></div>
+
+    <div id="day-details" class="hidden mt-8 max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+        <h2 class="text-2xl font-semibold mb-4">Ziua selectată: <span id="selected-date"></span></h2>
+        <textarea id="entry-text" class="w-full p-4 border rounded-lg mb-4" placeholder="Note pentru ziua asta..."
+            rows="5"></textarea>
+        <input id="media-upload" type="file" accept="image/*,video/*,audio/*" multiple class="mb-4">
+        <div id="media-preview" class="grid grid-cols-2 gap-4 mb-4"></div>
+        <div class="flex justify-between">
+            <button onclick="saveEntry()"
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Salvează</button>
+            <button onclick="exportEntry()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Exportă
+                ca Blog/Podcast</button>
+        </div>
     </div>
 
-    <script src="script.js"></script>
+    <div id="export-output" class="hidden mt-8 max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg"></div>
+
+    <script>
+        const calendar = document.getElementById("calendar");
+        const dayDetails = document.getElementById("day-details");
+        const selectedDateSpan = document.getElementById("selected-date");
+        const entryText = document.getElementById("entry-text");
+        const mediaUpload = document.getElementById("media-upload");
+        const mediaPreview = document.getElementById("media-preview");
+        const exportOutput = document.getElementById("export-output");
+
+        let selectedDay = null;
+        let entries = JSON.parse(localStorage.getItem("journalEntries")) || {};
+
+        // Generate calendar for the current month
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            const day = document.createElement("div");
+            day.className = "bg-white p-4 text-center border rounded-lg cursor-pointer hover:bg-gray-200";
+            day.textContent = i;
+            day.onclick = () => openDay(i);
+            calendar.appendChild(day);
+        }
+
+        function openDay(day) {
+            selectedDay = day;
+            selectedDateSpan.textContent = `${day}/${month + 1}/${year}`;
+            dayDetails.classList.remove("hidden");
+            exportOutput.classList.add("hidden");
+            entryText.value = entries[day]?.text || "";
+            mediaPreview.innerHTML = "";
+            if (entries[day]?.media) {
+                entries[day].media.forEach(file => displayMedia(file));
+            }
+        }
+
+        function displayMedia(file) {
+            const mediaContainer = document.createElement("div");
+            if (file.type.startsWith("image/")) {
+                mediaContainer.innerHTML = `<img src="${file.data}" class="w-full h-32 object-cover rounded-lg" alt="Media">`;
+            } else if (file.type.startsWith("video/")) {
+                mediaContainer.innerHTML = `<video src="${file.data}" class="w-full h-32 object-cover rounded-lg" controls></video>`;
+            } else if (file.type.startsWith("audio/")) {
+                mediaContainer.innerHTML = `<audio src="${file.data}" class="w-full" controls></audio>`;
+            }
+            mediaPreview.appendChild(mediaContainer);
+        }
+
+        mediaUpload.addEventListener("change", () => {
+            mediaPreview.innerHTML = "";
+            Array.from(mediaUpload.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    displayMedia({ type: file.type, data: reader.result });
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        function saveEntry() {
+            if (!selectedDay) return;
+            const files = Array.from(mediaUpload.files).map(file => ({
+                type: file.type,
+                data: URL.createObjectURL(file)
+            }));
+            entries[selectedDay] = {
+                text: entryText.value,
+                media: files
+            };
+            localStorage.setItem("journalEntries", JSON.stringify(entries));
+            alert("Intrarea a fost salvată!");
+        }
+
+        function exportEntry() {
+            if (!selectedDay || !entries[selectedDay]) {
+                alert("Nicio intrare de exportat!");
+                return;
+            }
+            const entry = entries[selectedDay];
+            let exportContent = `<h2 class="text-xl font-bold mb-4">Jurnal - ${selectedDateSpan.textContent}</h2>`;
+            exportContent += `<p class="mb-4">${entry.text || "Fără text."}</p>`;
+            if (entry.media.length) {
+                exportContent += `<div class="grid grid-cols-2 gap-4">`;
+                entry.media.forEach(file => {
+                    if (file.type.startsWith("image/")) {
+                        exportContent += `<img src="${file.data}" class="w-full h-48 object-cover rounded-lg" alt="Media">`;
+                    } else if (file.type.startsWith("video/")) {
+                        exportContent += `<video src="${file.data}" class="w-full h-48 object-cover rounded-lg" controls></video>`;
+                    } else if (file.type.startsWith("audio/")) {
+                        exportContent += `<audio src="${file.data}" class="w-full" controls></audio>`;
+                    }
+                });
+                exportContent += `</div>`;
+            }
+            exportOutput.innerHTML = exportContent;
+            exportOutput.classList.remove("hidden");
+        }
+    </script>
 </body>
 
 </html>
-body {
-background-color: #e2e0dc;
-font-family: sans-serif;
-padding: 20px;
-}
-
-#calendar {
-display: grid;
-grid-template-columns: repeat(7, 1fr);
-gap: 10px;
-margin-top: 20px;
-}
-
-.day {
-background: #fff;
-border: 1px solid #ccc;
-padding: 10px;
-text-align: center;
-cursor: pointer;
-}
-
-.hidden {
-display: none;
-}
-
-#day-details {
-margin-top: 30px;
-background: #f9f9f9;
-padding: 20px;
-border: 1px solid #aaa;
-}
-const calendar = document.getElementById("calendar");
-const dayDetails = document.getElementById("day-details");
-const selectedDateSpan = document.getElementById("selected-date");
-
-for (let i = 1; i <= 30; i++) { const day=document.createElement("div"); day.className="day" ; day.textContent=i;
-    day.onclick=()=> openDay(i);
-    calendar.appendChild(day);
-    }
-
-    function openDay(day) {
-    selectedDateSpan.textContent = `Ziua ${day}`;
-    dayDetails.classList.remove("hidden");
-    }
-
-    function saveEntry() {
-    alert("Intrarea a fost salvată (simulat)");
-    }
