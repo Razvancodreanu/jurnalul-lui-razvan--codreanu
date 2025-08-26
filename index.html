@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Jurnalul lui Razvan Codreanu</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h1>Calendar Multimedia</h1>
+    <div id="calendar"></div>
+
+    <div id="day-details" class="hidden">
+        <h2>Ziua selectată: <span id="selected-date"></span></h2>
+        <textarea placeholder="Note pentru ziua asta..."></textarea>
+        <input type="file" accept="image/*,video/*,audio/*" multiple>
+        <button onclick="saveEntry()">Salvează</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
+body {
+background-color: #e2e0dc;
+font-family: sans-serif;
+padding: 20px;
+}
+
+#calendar {
+display: grid;
+grid-template-columns: repeat(7, 1fr);
+gap: 10px;
+margin-top: 20px;
+}
+
+.day {
+background: #fff;
+border: 1px solid #ccc;
+padding: 10px;
+text-align: center;
+cursor: pointer;
+}
+
+.hidden {
+display: none;
+}
+
+#day-details {
+margin-top: 30px;
+background: #f9f9f9;
+padding: 20px;
+border: 1px solid #aaa;
+}
+const calendar = document.getElementById("calendar");
+const dayDetails = document.getElementById("day-details");
+const selectedDateSpan = document.getElementById("selected-date");
+
+for (let i = 1; i <= 30; i++) { const day=document.createElement("div"); day.className="day" ; day.textContent=i;
+    day.onclick=()=> openDay(i);
+    calendar.appendChild(day);
+    }
+
+    function openDay(day) {
+    selectedDateSpan.textContent = `Ziua ${day}`;
+    dayDetails.classList.remove("hidden");
+    }
+
+    function saveEntry() {
+    alert("Intrarea a fost salvată (simulat)");
+    }
